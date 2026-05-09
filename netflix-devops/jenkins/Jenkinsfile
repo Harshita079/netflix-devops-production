@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        AWS_CREDS = credentials('aws-creds')
-        AWS_DEFAULT_REGION = 'us-east-1'
-    }
-
     stages {
 
         stage('Terraform Format') {
@@ -19,11 +14,7 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 dir('netflix-devops/terraform') {
-                    sh '''
-                    export AWS_ACCESS_KEY_ID=$AWS_CREDS_USR
-                    export AWS_SECRET_ACCESS_KEY=$AWS_CREDS_PSW
-                    terraform init
-                    '''
+                    sh 'terraform init'
                 }
             }
         }
@@ -31,11 +22,7 @@ pipeline {
         stage('Terraform Validate') {
             steps {
                 dir('netflix-devops/terraform') {
-                    sh '''
-                    export AWS_ACCESS_KEY_ID=$AWS_CREDS_USR
-                    export AWS_SECRET_ACCESS_KEY=$AWS_CREDS_PSW
-                    terraform validate
-                    '''
+                    sh 'terraform validate'
                 }
             }
         }
@@ -43,11 +30,15 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 dir('netflix-devops/terraform') {
-                    sh '''
-                    export AWS_ACCESS_KEY_ID=$AWS_CREDS_USR
-                    export AWS_SECRET_ACCESS_KEY=$AWS_CREDS_PSW
-                    terraform plan
-                    '''
+                    sh 'terraform plan'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('netflix-devops') {
+                    sh 'docker build -t netflix-app .'
                 }
             }
         }
