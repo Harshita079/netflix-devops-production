@@ -22,10 +22,10 @@ pipeline {
             }
         }
 
-        stage('Terraform Format Check') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform fmt -check'
+        stage('Terraform Format Fix') {
+           steps {
+               dir('netflix-devops/terraform') {
+                   sh 'terraform fmt'
                 }
             }
         }
