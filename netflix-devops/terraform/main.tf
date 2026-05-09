@@ -1,4 +1,6 @@
-# main.tf
+# =========================
+# VPC
+# =========================
 
 module "vpc" {
   source = "./modules/vpc"
@@ -8,6 +10,10 @@ module "vpc" {
   public_subnet_cidr = var.public_subnet_cidr
   availability_zone  = var.availability_zone
 }
+
+# =========================
+# Security Group
+# =========================
 
 module "security_group" {
   source = "./modules/security-group"
@@ -37,49 +43,51 @@ module "jenkins_ec2" {
   security_group_id = module.security_group.security_group_id
 
   user_data = <<-EOF
-              #!/bin/bash
+#!/bin/bash
 
-              yum update -y
+# Update packages
+yum update -y
 
-              # Install Docker and Git
-              yum install -y docker git
+# Install Docker and Git
+yum install -y docker git
 
-              # Start Docker
-              systemctl start docker
-              systemctl enable docker
+# Start Docker
+systemctl start docker
+systemctl enable docker
 
-              # Add ec2-user to docker group
-              usermod -aG docker ec2-user
+# Docker permissions
+usermod -aG docker ec2-user
 
-              # Create Jenkins Volume
-              docker volume create jenkins_home
+# Create Jenkins volume
+docker volume create jenkins_home
 
-              # Run Jenkins Container
-              docker run -d \
-                --name jenkins \
-                -p 8080:8080 \
-                -p 50000:50000 \
-                -v jenkins_home:/var/jenkins_home \
-                jenkins/jenkins:lts
+# Run Jenkins container
+docker run -d \
+  --name jenkins \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  jenkins/jenkins:lts
 
-              # Wait for Jenkins to fully start
-              sleep 40
+# Wait for Jenkins startup
+sleep 120
 
-              # Install Terraform + AWS CLI + Docker CLI inside Jenkins container
-              docker exec -u root jenkins bash -c '
-              apt-get update && \
-              apt-get install -y wget unzip curl git docker.io && \
+# Install Terraform inside Jenkins container
+docker exec -u root jenkins bash -c "
+apt-get update &&
+apt-get install -y wget unzip curl git docker.io &&
 
-              wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip && \
-              unzip terraform_1.6.6_linux_amd64.zip && \
-              mv terraform /usr/local/bin/ && \
-              rm terraform_1.6.6_linux_amd64.zip && \
+wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
 
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-              unzip awscliv2.zip && \
-              ./aws/install
-              '
-              EOF
+unzip terraform_1.6.6_linux_amd64.zip &&
+
+mv terraform /usr/local/bin/ &&
+
+chmod +x /usr/local/bin/terraform &&
+
+terraform --version
+"
+EOF
 }
 
 # =========================
@@ -104,20 +112,21 @@ module "app_ec2" {
   security_group_id = module.security_group.security_group_id
 
   user_data = <<-EOF
-              #!/bin/bash
+#!/bin/bash
 
-              yum update -y
+# Update packages
+yum update -y
 
-              # Install Docker and Git
-              yum install -y docker git
+# Install Docker and Git
+yum install -y docker git
 
-              # Start Docker
-              systemctl start docker
-              systemctl enable docker
+# Start Docker
+systemctl start docker
+systemctl enable docker
 
-              # Add ec2-user to docker group
-              usermod -aG docker ec2-user
-              EOF
+# Docker permissions
+usermod -aG docker ec2-user
+EOF
 }
 
 # =========================
