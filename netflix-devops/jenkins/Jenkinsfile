@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         TF_IN_AUTOMATION = "true"
-        AWS_DEFAULT_REGION = 'us-east-1'
     }
 
     stages {
@@ -18,15 +17,14 @@ pipeline {
         stage('Install Terraform') {
             steps {
                 sh '''
-                if ! command -v terraform > /dev/null; then
-                    apt-get update
-                    apt-get install -y wget unzip
-                    wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
-                    unzip terraform_1.6.6_linux_amd64.zip
-                    mv terraform /usr/local/bin/
-                    chmod +x /usr/local/bin/terraform
-                fi
-                terraform --version
+                docker exec -u root jenkins bash -c "
+                apt-get update &&
+                apt-get install -y wget unzip &&
+                wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
+                unzip terraform_1.6.6_linux_amd64.zip &&
+                mv terraform /usr/local/bin/ &&
+                chmod +x /usr/local/bin/terraform
+                "
                 '''
             }
         }
@@ -34,7 +32,7 @@ pipeline {
         stage('Terraform Format') {
             steps {
                 dir('terraform') {
-                    sh 'terraform fmt'
+                    sh 'terraform fmt -check'
                 }
             }
         }
@@ -62,11 +60,31 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t netflix-app .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh '''
+                docker stop netflix-container || true
+                docker rm netflix-container || true
+
+                docker run -d \
+                --name netflix-container \
+                -p 80:80 \
+                netflix-app
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Pipeline Successfully Executed!'
+            echo 'Pipeline Executed Successfully!'
         }
 
         failure {
