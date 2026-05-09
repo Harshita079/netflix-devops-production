@@ -1,6 +1,4 @@
-# =========================
-# VPC
-# =========================
+# main.tf
 
 module "vpc" {
   source = "./modules/vpc"
@@ -11,10 +9,6 @@ module "vpc" {
   availability_zone  = var.availability_zone
 }
 
-# =========================
-# Security Group
-# =========================
-
 module "security_group" {
   source = "./modules/security-group"
 
@@ -22,9 +16,9 @@ module "security_group" {
   vpc_id       = module.vpc.vpc_id
 }
 
-# =========================
+# ====================================
 # Jenkins Server
-# =========================
+# ====================================
 
 module "jenkins_ec2" {
   source = "./modules/ec2"
@@ -45,7 +39,7 @@ module "jenkins_ec2" {
   user_data = <<-EOF
 #!/bin/bash
 
-# Update packages
+# Update server
 yum update -y
 
 # Install Docker and Git
@@ -69,30 +63,12 @@ docker run -d \
   -v jenkins_home:/var/jenkins_home \
   jenkins/jenkins:lts
 
-# Wait for Jenkins startup
-sleep 120
-
-# Install Terraform inside Jenkins container
-docker exec -u root jenkins bash -c "
-apt-get update &&
-apt-get install -y wget unzip curl git docker.io &&
-
-wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
-
-unzip terraform_1.6.6_linux_amd64.zip &&
-
-mv terraform /usr/local/bin/ &&
-
-chmod +x /usr/local/bin/terraform &&
-
-terraform --version
-"
 EOF
 }
 
-# =========================
+# ====================================
 # Application Server
-# =========================
+# ====================================
 
 module "app_ec2" {
   source = "./modules/ec2"
@@ -114,7 +90,7 @@ module "app_ec2" {
   user_data = <<-EOF
 #!/bin/bash
 
-# Update packages
+# Update server
 yum update -y
 
 # Install Docker and Git
@@ -126,12 +102,13 @@ systemctl enable docker
 
 # Docker permissions
 usermod -aG docker ec2-user
+
 EOF
 }
 
-# =========================
+# ====================================
 # Monitoring
-# =========================
+# ====================================
 
 module "monitoring" {
   source = "./modules/monitoring"
