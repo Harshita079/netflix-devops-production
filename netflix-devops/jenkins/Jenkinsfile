@@ -1,12 +1,5 @@
-// Jenkinsfile
-
 pipeline {
     agent any
-
-    environment {
-        IMAGE_NAME = "netflix-devops-app"
-        CONTAINER_NAME = "netflix-app"
-    }
 
     stages {
 
@@ -51,33 +44,26 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                sh 'docker build -t netflix-app .'
             }
         }
 
         stage('Remove Old Container') {
             steps {
-                sh '''
-                docker rm -f $CONTAINER_NAME || true
-                '''
+                sh 'docker rm -f netflix-container || true'
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                sh '''
-                docker run -d \
-                --name $CONTAINER_NAME \
-                -p 3000:3000 \
-                $IMAGE_NAME
-                '''
+                sh 'docker run -d -p 80:80 --name netflix-container netflix-app'
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline Executed Successfully!'
+            echo 'Pipeline executed successfully!'
         }
 
         failure {
