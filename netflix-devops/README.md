@@ -68,3 +68,21 @@ netflix-devops-production/
 │
 ├── README.md
 └── .gitignore
+
+## Commands
+
+### Terraform
+
+terraform init
+
+terraform plan
+
+terraform apply
+
+terraform destroy
+
+### Jenkins
+
+Access Jenkins:
+
+http://<JENKINS_PUBLIC_IP>:8080

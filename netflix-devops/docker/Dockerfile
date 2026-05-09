@@ -1,7 +1,15 @@
-FROM nginx:latest
+# Dockerfile
 
-COPY app /usr/share/nginx/html
+FROM node:18
 
-EXPOSE 80
+WORKDIR /app
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]

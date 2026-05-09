@@ -1,25 +1,8 @@
-# Terraform
+# .gitignore
+
 .terraform/
-*.tfstate
-*.tfstate.*
-crash.log
-
-# Terraform Variables
+terraform.tfstate
+terraform.tfstate.backup
 *.tfvars
-
-# Sensitive Files
 *.pem
-*.key
-
-# Docker
-*.tar
-
-# Logs
-*.log
-
-# VS Code
-.vscode/
-
-# OS Files
-.DS_Store
-Thumbs.dbs
+node_modules/

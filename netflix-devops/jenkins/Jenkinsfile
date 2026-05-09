@@ -1,8 +1,11 @@
+// Jenkinsfile
+
 pipeline {
     agent any
 
     environment {
-        TF_IN_AUTOMATION = "true"
+        IMAGE_NAME = "netflix-devops-app"
+        CONTAINER_NAME = "netflix-app"
     }
 
     stages {
@@ -14,25 +17,10 @@ pipeline {
             }
         }
 
-        stage('Install Terraform') {
-            steps {
-                sh '''
-                docker exec -u root jenkins bash -c "
-                apt-get update &&
-                apt-get install -y wget unzip &&
-                wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
-                unzip terraform_1.6.6_linux_amd64.zip &&
-                mv terraform /usr/local/bin/ &&
-                chmod +x /usr/local/bin/terraform
-                "
-                '''
-            }
-        }
-
         stage('Terraform Format') {
             steps {
                 dir('terraform') {
-                    sh 'terraform fmt -check'
+                    sh 'terraform fmt'
                 }
             }
         }
@@ -63,20 +51,25 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t netflix-app .'
+                sh 'docker build -t $IMAGE_NAME .'
+            }
+        }
+
+        stage('Remove Old Container') {
+            steps {
+                sh '''
+                docker rm -f $CONTAINER_NAME || true
+                '''
             }
         }
 
         stage('Run Docker Container') {
             steps {
                 sh '''
-                docker stop netflix-container || true
-                docker rm netflix-container || true
-
                 docker run -d \
-                --name netflix-container \
-                -p 80:80 \
-                netflix-app
+                --name $CONTAINER_NAME \
+                -p 3000:3000 \
+                $IMAGE_NAME
                 '''
             }
         }
