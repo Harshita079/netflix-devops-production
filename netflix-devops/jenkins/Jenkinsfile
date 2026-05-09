@@ -12,7 +12,7 @@ pipeline {
 
         stage('Terraform Format') {
             steps {
-                dir('terraform') {
+                dir('netflix-devops/terraform') {
                     sh 'terraform fmt'
                 }
             }
@@ -20,7 +20,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir('terraform') {
+                dir('netflix-devops/terraform') {
                     sh 'terraform init'
                 }
             }
@@ -28,7 +28,7 @@ pipeline {
 
         stage('Terraform Validate') {
             steps {
-                dir('terraform') {
+                dir('netflix-devops/terraform') {
                     sh 'terraform validate'
                 }
             }
@@ -36,7 +36,7 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('terraform') {
+                dir('netflix-devops/terraform') {
                     sh 'terraform plan'
                 }
             }
@@ -44,7 +44,9 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t netflix-app .'
+                dir('netflix-devops') {
+                    sh 'docker build -t netflix-app .'
+                }
             }
         }
 
