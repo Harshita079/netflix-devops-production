@@ -1,66 +1,70 @@
-# README.md
+# Netflix DevOps Production Project
 
-# 🚀 Netflix DevOps CI/CD Project
+## Project Overview
 
-Production-Style DevOps Project using:
+This project demonstrates a simplified production-style DevOps pipeline using:
 
+- AWS EC2
 - Terraform
 - Jenkins
 - Docker
-- AWS
 - CloudWatch
+- S3 Backend
 - GitHub Webhooks
 
----
-
-# 📌 Project Overview
-
-This project demonstrates a fully automated CI/CD pipeline using modern DevOps tools and AWS cloud infrastructure.
-
-The system automates:
-
-- Infrastructure provisioning
-- Application deployment
-- Docker containerization
-- Continuous Integration
-- Continuous Deployment
-- Monitoring
+The project automatically provisions infrastructure, validates Terraform configuration, builds Docker images, and deploys a Netflix clone application.
 
 ---
 
-# 🏗️ Architecture
+# Architecture
 
-GitHub → Jenkins → Terraform → AWS EC2 → Docker → Live Application
-
-                       ↓
-
-                 CloudWatch Monitoring
+GitHub → Jenkins Pipeline → Terraform → AWS EC2 → Docker → Netflix App
 
 ---
 
-# ⚙️ Technologies Used
+# Technologies Used
 
-| Technology | Purpose |
-|---|---|
-| Terraform | Infrastructure as Code |
-| Jenkins | CI/CD Automation |
-| Docker | Containerization |
-| AWS EC2 | Compute Infrastructure |
-| CloudWatch | Monitoring |
-| GitHub | Source Control |
-| Nginx | Web Server |
+- AWS EC2
+- Terraform
+- Jenkins
+- Docker
+- GitHub
+- CloudWatch
+- S3 Backend
+- HTML
+- CSS
+- JavaScript
+- Nginx
 
 ---
 
-# 📂 Project Structure
+# Project Structure
 
 ```text
-netflix-devops/
+netflix-devops-production/
 │
 ├── app/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+│
 ├── docker/
-├── terraform/
+│   └── Dockerfile
+│
 ├── jenkins/
+│   └── Jenkinsfile
+│
+├── terraform/
+│   ├── backend.tf
+│   ├── main.tf
+│   ├── outputs.tf
+│   ├── provider.tf
+│   ├── terraform.tfvars
+│   ├── variables.tf
+│   └── versions.tf
+│
 ├── scripts/
-├── docs/
-└── README.md
+│   └── deploy.sh
+│
+├── README.md
+└── .gitignore

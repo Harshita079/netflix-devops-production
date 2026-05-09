@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         TF_IN_AUTOMATION = "true"
+        AWS_DEFAULT_REGION = 'us-east-1'
     }
 
     stages {
@@ -14,25 +15,33 @@ pipeline {
             }
         }
 
-        stage('Debug Files') {
+        stage('Install Terraform') {
             steps {
-                sh 'pwd'
-                sh 'ls -la'
-                sh 'find .'
+                sh '''
+                if ! command -v terraform > /dev/null; then
+                    apt-get update
+                    apt-get install -y wget unzip
+                    wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
+                    unzip terraform_1.6.6_linux_amd64.zip
+                    mv terraform /usr/local/bin/
+                    chmod +x /usr/local/bin/terraform
+                fi
+                terraform --version
+                '''
             }
         }
 
-        stage('Terraform Format Fix') {
-           steps {
-               dir('netflix-devops/terraform') {
-                   sh 'terraform fmt'
+        stage('Terraform Format') {
+            steps {
+                dir('terraform') {
+                    sh 'terraform fmt'
                 }
             }
         }
 
         stage('Terraform Init') {
             steps {
-                dir('netflix-devops/terraform') {
+                dir('terraform') {
                     sh 'terraform init'
                 }
             }
@@ -40,7 +49,7 @@ pipeline {
 
         stage('Terraform Validate') {
             steps {
-                dir('netflix-devops/terraform') {
+                dir('terraform') {
                     sh 'terraform validate'
                 }
             }
@@ -48,8 +57,8 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform plan -out=tfplan'
+                dir('terraform') {
+                    sh 'terraform plan'
                 }
             }
         }

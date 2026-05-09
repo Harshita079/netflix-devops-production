@@ -1,45 +1,25 @@
-# .gitignore
-
 # Terraform
 .terraform/
 *.tfstate
-*.tfstate.backup
-terraform.tfvars.backup
+*.tfstate.*
+crash.log
 
-# Terraform Plan Files
-*.tfplan
+# Terraform Variables
+*.tfvars
 
 # Sensitive Files
 *.pem
 *.key
 
+# Docker
+*.tar
+
 # Logs
 *.log
-
-# Environment Files
-.env
-
-# macOS
-.DS_Store
 
 # VS Code
 .vscode/
 
-# IntelliJ
-.idea/
-
-# Node Modules
-node_modules/
-
-# Jenkins Workspace
-workspace/
-
-# Docker
-docker-cache/
-
-# Temporary Files
-tmp/
-temp/
-
 # OS Files
-Thumbs.db
+.DS_Store
+Thumbs.dbs
