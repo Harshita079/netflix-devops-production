@@ -9,13 +9,8 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/Harshita079/netflix-devops-production.git'
-                    ]]
-                ])
+                git branch: 'main',
+                url: 'https://github.com/Harshita079/netflix-devops-production.git'
             }
         }
 
@@ -27,9 +22,16 @@ pipeline {
             }
         }
 
+        stage('Check Terraform Files') {
+            steps {
+                sh 'ls -la terraform'
+                sh 'find terraform -name "*.tf"'
+            }
+        }
+
         stage('Terraform Format Check') {
             steps {
-                dir('terraform') {
+                dir('./terraform') {
                     sh 'terraform fmt -check'
                 }
             }
@@ -37,7 +39,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir('terraform') {
+                dir('./terraform') {
                     sh 'terraform init'
                 }
             }
@@ -45,7 +47,7 @@ pipeline {
 
         stage('Terraform Validate') {
             steps {
-                dir('terraform') {
+                dir('./terraform') {
                     sh 'terraform validate'
                 }
             }
@@ -53,12 +55,11 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('terraform') {
+                dir('./terraform') {
                     sh 'terraform plan -out=tfplan'
                 }
             }
         }
-
     }
 
     post {
