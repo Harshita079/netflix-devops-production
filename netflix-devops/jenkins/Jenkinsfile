@@ -1,12 +1,16 @@
 pipeline {
     agent any
 
+    environment {
+        AWS_CREDS = credentials('aws-creds')
+        AWS_DEFAULT_REGION = 'us-east-1'
+    }
+
     stages {
 
         stage('Checkout Code') {
             steps {
-                git branch: 'main',
-                url: 'https://github.com/Harshita079/netflix-devops-production.git'
+                git 'https://github.com/Harshita079/netflix-devops-production.git'
             }
         }
 
@@ -21,7 +25,11 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 dir('netflix-devops/terraform') {
-                    sh 'terraform init'
+                    sh '''
+                    export AWS_ACCESS_KEY_ID=$AWS_CREDS_USR
+                    export AWS_SECRET_ACCESS_KEY=$AWS_CREDS_PSW
+                    terraform init
+                    '''
                 }
             }
         }
@@ -29,7 +37,11 @@ pipeline {
         stage('Terraform Validate') {
             steps {
                 dir('netflix-devops/terraform') {
-                    sh 'terraform validate'
+                    sh '''
+                    export AWS_ACCESS_KEY_ID=$AWS_CREDS_USR
+                    export AWS_SECRET_ACCESS_KEY=$AWS_CREDS_PSW
+                    terraform validate
+                    '''
                 }
             }
         }
@@ -37,39 +49,13 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 dir('netflix-devops/terraform') {
-                    sh 'terraform plan'
+                    sh '''
+                    export AWS_ACCESS_KEY_ID=$AWS_CREDS_USR
+                    export AWS_SECRET_ACCESS_KEY=$AWS_CREDS_PSW
+                    terraform plan
+                    '''
                 }
             }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                dir('netflix-devops') {
-                    sh 'docker build -t netflix-app .'
-                }
-            }
-        }
-
-        stage('Remove Old Container') {
-            steps {
-                sh 'docker rm -f netflix-container || true'
-            }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                sh 'docker run -d -p 80:80 --name netflix-container netflix-app'
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline executed successfully!'
-        }
-
-        failure {
-            echo 'Pipeline Failed!'
         }
     }
 }
