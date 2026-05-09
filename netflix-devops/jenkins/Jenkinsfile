@@ -22,16 +22,9 @@ pipeline {
             }
         }
 
-        stage('Check Terraform Files') {
-            steps {
-                sh 'ls -la terraform'
-                sh 'find terraform -name "*.tf"'
-            }
-        }
-
         stage('Terraform Format Check') {
             steps {
-                dir('./terraform') {
+                dir('netflix-devops/terraform') {
                     sh 'terraform fmt -check'
                 }
             }
@@ -39,7 +32,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir('./terraform') {
+                dir('netflix-devops/terraform') {
                     sh 'terraform init'
                 }
             }
@@ -47,7 +40,7 @@ pipeline {
 
         stage('Terraform Validate') {
             steps {
-                dir('./terraform') {
+                dir('netflix-devops/terraform') {
                     sh 'terraform validate'
                 }
             }
@@ -55,7 +48,7 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('./terraform') {
+                dir('netflix-devops/terraform') {
                     sh 'terraform plan -out=tfplan'
                 }
             }
