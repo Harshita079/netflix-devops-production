@@ -1,7 +1,3 @@
-output "jenkins_ip" {
-  value = aws_instance.jenkins.public_ip
-}
-
-output "app_ip" {
-  value = aws_instance.app.public_ip
+output "instance_public_ip" {
+  value = aws_instance.netflix_server.public_ip
 }
