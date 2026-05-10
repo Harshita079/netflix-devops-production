@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.aws_region
-}
-
 resource "aws_security_group" "netflix_sg" {
   name = "netflix-sg"
 
@@ -37,12 +33,27 @@ resource "aws_security_group" "netflix_sg" {
 resource "aws_instance" "netflix_server" {
   ami           = var.ami_id
   instance_type = var.instance_type
+  key_name      = var.key_name
 
   vpc_security_group_ids = [
     aws_security_group.netflix_sg.id
   ]
 
   tags = {
-    Name = "Netflix-DevOps-Server"
+    Name = "Netflix-App-Server"
+  }
+}
+
+resource "aws_instance" "jenkins_server" {
+  ami           = var.ami_id
+  instance_type = var.instance_type
+  key_name      = var.key_name
+
+  vpc_security_group_ids = [
+    aws_security_group.netflix_sg.id
+  ]
+
+  tags = {
+    Name = "Jenkins-Server"
   }
 }
