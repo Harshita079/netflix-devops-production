@@ -1,43 +1,28 @@
 pipeline {
-    agent any
-
-    environment {
-        APP_IP = "50.17.107.206"
-    }
+    agent none
 
     stages {
 
-        stage('Build Docker Image') {
+        stage('Build') {
+            agent { label 'jenkins-master' }
+
             steps {
-                dir('netflix-devops') {
-                    sh '''
-                    docker build -t netflix-app -f docker/Dockerfile .
-                    '''
-                }
+                sh 'docker build -t netflix-app -f docker/Dockerfile .'
             }
         }
 
-        stage('Deploy Netflix App') {
+        stage('Deploy') {
+            agent { label 'app-server' }
+
             steps {
-                dir('netflix-devops') {
-                    sh """
-                    docker save -o netflix-app.tar netflix-app
+                sh '''
+                docker stop netflix || true
+                docker rm netflix || true
 
-                    scp -o StrictHostKeyChecking=no \
-                    -i /var/jenkins_home/netflix-key.pem \
-                    netflix-app.tar ec2-user@${APP_IP}:/home/ec2-user/
+                docker build -t netflix-app -f docker/Dockerfile .
 
-                    ssh -o StrictHostKeyChecking=no \
-                    -i /var/jenkins_home/netflix-key.pem \
-                    ec2-user@${APP_IP} '
-
-                    docker stop netflix || true
-                    docker rm netflix || true
-                    docker load -i /home/ec2-user/netflix-app.tar
-                    docker run -d -p 80:80 --name netflix netflix-app
-                    '
-                    """
-                }
+                docker run -d -p 80:80 --name netflix netflix-app
+                '''
             }
         }
     }
