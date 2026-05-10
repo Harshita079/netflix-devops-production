@@ -3,46 +3,6 @@ pipeline {
 
     stages {
 
-        stage('Terraform Format') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform fmt'
-                }
-            }
-        }
-
-        stage('Terraform Init') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform init'
-                }
-            }
-        }
-
-        stage('Terraform Validate') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform validate'
-                }
-            }
-        }
-
-        stage('Terraform Plan') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform plan'
-                }
-            }
-        }
-        
-        stage('Terraform Apply') {
-            steps {
-                 dir('netflix-devops/terraform') {
-                    sh 'terraform apply -auto-approve'
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 dir('netflix-devops') {
@@ -77,7 +37,6 @@ pipeline {
 
                     docker stop netflix || true
                     docker rm netflix || true
-                    docker rmi netflix-app || true
 
                     docker load -i /home/ec2-user/netflix-app.tar
 
