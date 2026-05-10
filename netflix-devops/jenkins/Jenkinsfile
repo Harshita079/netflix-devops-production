@@ -1,33 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        APP_IP = "YOUR_APP_SERVER_PUBLIC_IP"
+    }
+
     stages {
-
-        stage('Terraform Init') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh '''
-                    terraform init -reconfigure
-                    '''
-                }
-            }
-        }
-
-        stage('Terraform Format') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform fmt'
-                }
-            }
-        }
-
-        stage('Terraform Validate') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform validate'
-                }
-            }
-        }
 
         stage('Build Docker Image') {
             steps {
@@ -41,16 +19,6 @@ pipeline {
 
         stage('Deploy Netflix App') {
             steps {
-
-                dir('netflix-devops/terraform') {
-                    script {
-                        env.APP_IP = sh(
-                            script: "terraform output -raw app_ip",
-                            returnStdout: true
-                        ).trim()
-                    }
-                }
-
                 dir('netflix-devops') {
                     sh """
                     docker save -o netflix-app.tar netflix-app
