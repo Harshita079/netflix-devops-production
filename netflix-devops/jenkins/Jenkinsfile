@@ -34,11 +34,57 @@ pipeline {
                 }
             }
         }
+        
+        stage('Terraform Apply') {
+            steps {
+                 dir('netflix-devops/terraform') {
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
                 dir('netflix-devops') {
                     sh 'docker build -t netflix-app -f docker/Dockerfile .'
+                }
+            }
+        }
+
+        stage('Deploy Netflix App') {
+            steps {
+
+                dir('netflix-devops/terraform') {
+                    script {
+                        env.APP_IP = sh(
+                            script: "terraform output -raw app_ip",
+                            returnStdout: true
+                        ).trim()
+                    }
+                }
+
+                dir('netflix-devops') {
+                    sh '''
+                    docker save -o netflix-app.tar netflix-app
+
+                    scp -o StrictHostKeyChecking=no \
+                    -i /var/jenkins_home/netflix-key.pem \
+                    netflix-app.tar ec2-user@$APP_IP:/home/ec2-user/
+
+                    ssh -o StrictHostKeyChecking=no \
+                    -i /var/jenkins_home/netflix-key.pem \
+                    ec2-user@$APP_IP "
+
+                    docker stop netflix || true
+                    docker rm netflix || true
+                    docker rmi netflix-app || true
+
+                    docker load -i /home/ec2-user/netflix-app.tar
+
+                    docker run -d -p 80:80 \
+                    --name netflix netflix-app
+                    "
+                    '''
                 }
             }
         }
