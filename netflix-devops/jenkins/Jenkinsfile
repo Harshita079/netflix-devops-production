@@ -76,9 +76,12 @@ pipeline {
                     def IMAGE_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
 
                     sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${APP_IP} "
+                    ssh -i /var/jenkins_home/netflix-key.pem \
+                    -o StrictHostKeyChecking=no ec2-user@${APP_IP} "
 
-                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login --username AWS --password-stdin \
+                    ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
                     docker stop netflix || true
                     docker rm netflix || true
