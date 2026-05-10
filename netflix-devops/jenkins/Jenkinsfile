@@ -11,10 +11,11 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            steps {
-                git 'https://github.com/Harshita079/netflix-devops-production.git'
+           steps {
+               git branch: 'main',
+               url: 'https://github.com/Harshita079/netflix-devops-production.git'
             }
-        }
+    }
 
         stage('Terraform Init') {
             steps {
