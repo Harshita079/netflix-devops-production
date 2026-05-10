@@ -3,18 +3,20 @@ pipeline {
 
     stages {
 
-        stage('Terraform Format') {
+        stage('Terraform Init') {
             steps {
                 dir('netflix-devops/terraform') {
-                    sh 'terraform fmt'
+                    sh '''
+                    terraform init -reconfigure
+                    '''
                 }
             }
         }
 
-        stage('Terraform Init') {
+        stage('Terraform Format') {
             steps {
                 dir('netflix-devops/terraform') {
-                    sh 'terraform init'
+                    sh 'terraform fmt'
                 }
             }
         }
@@ -27,18 +29,12 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan') {
-            steps {
-                dir('netflix-devops/terraform') {
-                    sh 'terraform plan'
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 dir('netflix-devops') {
-                    sh 'docker build -t netflix-app -f docker/Dockerfile .'
+                    sh '''
+                    docker build -t netflix-app -f docker/Dockerfile .
+                    '''
                 }
             }
         }
@@ -47,9 +43,6 @@ pipeline {
             steps {
 
                 dir('netflix-devops/terraform') {
-
-                    sh 'terraform init'
-
                     script {
                         env.APP_IP = sh(
                             script: "terraform output -raw app_ip",
@@ -59,24 +52,23 @@ pipeline {
                 }
 
                 dir('netflix-devops') {
-
-                    sh '''
+                    sh """
                     docker save -o netflix-app.tar netflix-app
 
                     scp -o StrictHostKeyChecking=no \
                     -i /var/jenkins_home/netflix-key.pem \
-                    netflix-app.tar ec2-user@$APP_IP:/home/ec2-user/
+                    netflix-app.tar ec2-user@${APP_IP}:/home/ec2-user/
 
                     ssh -o StrictHostKeyChecking=no \
                     -i /var/jenkins_home/netflix-key.pem \
-                    ec2-user@$APP_IP "
+                    ec2-user@${APP_IP} '
 
                     docker stop netflix || true
                     docker rm netflix || true
                     docker load -i /home/ec2-user/netflix-app.tar
                     docker run -d -p 80:80 --name netflix netflix-app
-                    "
-                    '''
+                    '
+                    """
                 }
             }
         }
