@@ -1,28 +1,96 @@
 pipeline {
-    agent none
+    agent any
+
+    environment {
+        AWS_ACCOUNT_ID = "0357-8642-6323"
+        AWS_REGION = "us-east-1"
+        ECR_REPO = "netflix-app"
+        IMAGE_TAG = "latest"
+    }
 
     stages {
 
-        stage('Build') {
-            agent { label 'jenkins-master' }
-
+        stage('Checkout') {
             steps {
-                sh 'docker build -t netflix-app -f docker/Dockerfile .'
+                git 'https://github.com/Harshita079/netflix-devops-production.git'
             }
         }
 
-        stage('Deploy') {
-            agent { label 'app-server' }
-
+        stage('Terraform Init') {
             steps {
+                dir('netflix-devops/terraform') {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('netflix-devops') {
+
+                    sh '''
+                    docker build -t $ECR_REPO:$IMAGE_TAG -f docker/Dockerfile .
+                    '''
+                }
+            }
+        }
+
+        stage('Tag Docker Image') {
+            steps {
+
                 sh '''
+                docker tag $ECR_REPO:$IMAGE_TAG \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('Push Image To ECR') {
+            steps {
+
+                sh '''
+                aws ecr get-login-password --region $AWS_REGION | \
+                docker login --username AWS --password-stdin \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+                docker push \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+
+                script {
+
+                    env.APP_IP = sh(
+                        script: '''
+                        cd netflix-devops/terraform
+                        terraform output -raw app_ip
+                        ''',
+                        returnStdout: true
+                    ).trim()
+                }
+
+                sh """
+                ssh -o StrictHostKeyChecking=no ec2-user@${APP_IP} "
+
+                aws ecr get-login-password --region us-east-1 | \
+                docker login --username AWS --password-stdin \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
                 docker stop netflix || true
                 docker rm netflix || true
 
-                docker build -t netflix-app -f docker/Dockerfile .
+                docker pull \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
 
-                docker run -d -p 80:80 --name netflix netflix-app
-                '''
+                docker run -d -p 80:80 \
+                --name netflix \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+                "
+                """
             }
         }
     }
