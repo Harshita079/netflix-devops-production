@@ -1,88 +1,116 @@
-# Netflix DevOps Production Project
+# Netflix DevOps CI/CD Pipeline Project
 
 ## Project Overview
 
-This project demonstrates a simplified production-style DevOps pipeline using:
+This project demonstrates an end-to-end DevOps CI/CD pipeline for deploying a Netflix clone application using AWS, Jenkins, Docker, Terraform, and Amazon ECR.
 
-- AWS EC2
-- Terraform
-- Jenkins
-- Docker
-- CloudWatch
-- S3 Backend
-- GitHub Webhooks
+The pipeline automates:
 
-The project automatically provisions infrastructure, validates Terraform configuration, builds Docker images, and deploys a Netflix clone application.
+* Infrastructure provisioning
+* Docker image creation
+* Container registry push
+* EC2 deployment
+* Continuous Integration and Continuous Deployment
 
 ---
 
-# Architecture
+## Technologies Used
 
-GitHub → Jenkins Pipeline → Terraform → AWS EC2 → Docker → Netflix App
-
----
-
-# Technologies Used
-
-- AWS EC2
-- Terraform
-- Jenkins
-- Docker
-- GitHub
-- CloudWatch
-- S3 Backend
-- HTML
-- CSS
-- JavaScript
-- Nginx
+* AWS EC2
+* AWS ECR
+* AWS CloudWatch
+* Terraform
+* Jenkins
+* Docker
+* GitHub
+* Linux
+* Shell Scripting
 
 ---
 
-# Project Structure
+## Architecture
 
-```text
-netflix-devops-production/
-│
-├── app/
-│   ├── index.html
-│   ├── style.css
-│   └── script.js
-│
-├── docker/
-│   └── Dockerfile
-│
-├── jenkins/
-│   └── Jenkinsfile
-│
-├── terraform/
-│   ├── backend.tf
-│   ├── main.tf
-│   ├── outputs.tf
-│   ├── provider.tf
-│   ├── terraform.tfvars
-│   ├── variables.tf
-│   └── versions.tf
-│
-├── scripts/
-│   └── deploy.sh
-│
-├── README.md
-└── .gitignore
+GitHub → Jenkins → Docker Build → Amazon ECR → EC2 Deployment
 
-## Commands
+---
+
+## Features
+
+* Automated CI/CD pipeline
+* Infrastructure as Code using Terraform
+* Docker containerization
+* Amazon ECR image storage
+* Automatic deployment on EC2
+* GitHub webhook integration
+* CloudWatch monitoring
+* Elastic IP configuration for stable deployment
+
+---
+
+## CI/CD Workflow
+
+1. Developer pushes code to GitHub
+2. GitHub webhook triggers Jenkins pipeline
+3. Jenkins pulls latest source code
+4. Docker image is built
+5. Docker image pushed to Amazon ECR
+6. Jenkins connects to EC2 instance
+7. Latest image pulled from ECR
+8. Existing container removed
+9. New container deployed automatically
+
+---
+
+## Jenkins Pipeline Stages
+
+* Checkout
+* Terraform Init
+* Build Docker Image
+* Tag Docker Image
+* Push Image To ECR
+* Deploy Application
+
+---
+
+## Project Setup
+
+### Clone Repository
+
+```bash
+git clone https://github.com/Harshita079/netflix-devops-production.git
+```
 
 ### Terraform
 
+```bash
 terraform init
-
-terraform plan
-
 terraform apply
-
-terraform destroy
+```
 
 ### Jenkins
 
-Access Jenkins:
+Configure Jenkins pipeline with GitHub webhook integration.
 
-http://<JENKINS_PUBLIC_IP>:8080
+### Docker
+
+```bash
+docker build -t netflix-app .
+```
+
+---
+
+## Monitoring
+
+AWS CloudWatch is used to monitor:
+
+* EC2 metrics
+* CPU utilization
+* Network activity
+* Instance health
+
+---
+
+## Author
+
+Harshita Pawar
+
