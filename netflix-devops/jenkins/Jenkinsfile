@@ -29,6 +29,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 dir('netflix-devops') {
+
                     sh '''
                     docker build -t $ECR_REPO:$IMAGE_TAG -f docker/Dockerfile .
                     '''
@@ -38,6 +39,7 @@ pipeline {
 
         stage('Tag Docker Image') {
             steps {
+
                 sh '''
                 docker tag $ECR_REPO:$IMAGE_TAG \
                 $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
@@ -47,6 +49,7 @@ pipeline {
 
         stage('Push Image To ECR') {
             steps {
+
                 sh '''
                 aws ecr get-login-password --region $AWS_REGION | \
                 docker login --username AWS --password-stdin \
@@ -63,22 +66,14 @@ pipeline {
 
                 script {
 
-                    env.APP_IP = sh(
-                        script: '''
-                        cd netflix-devops/terraform
-                        terraform output -raw app_ip
-                        ''',
-                        returnStdout: true
-                    ).trim()
+                    env.APP_IP = "34.236.197.160"
 
                     def IMAGE_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
 
                     sh """
                     chmod 400 ${PEM_FILE}
 
-                    ssh -i ${PEM_FILE} \
-                    -o StrictHostKeyChecking=no \
-                    ec2-user@${APP_IP} << EOF
+                    ssh -i ${PEM_FILE} -o StrictHostKeyChecking=no ec2-user@${APP_IP} << EOF
 
                     aws ecr get-login-password --region ${AWS_REGION} | \
                     docker login --username AWS --password-stdin \
