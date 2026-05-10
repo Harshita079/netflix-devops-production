@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = "0357-8642-6323"
+        AWS_ACCOUNT_ID = "035786426323"
         AWS_REGION = "us-east-1"
         ECR_REPO = "netflix-app"
         IMAGE_TAG = "latest"
