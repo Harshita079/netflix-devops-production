@@ -35,6 +35,7 @@ resource "aws_security_group" "netflix_sg" {
 }
 
 resource "aws_instance" "jenkins" {
+
   ami                    = var.ami_id
   instance_type          = var.instance_type
   key_name               = var.key_name
@@ -55,6 +56,8 @@ systemctl enable docker
 
 usermod -aG docker ec2-user
 
+chmod 666 /var/run/docker.sock
+
 docker pull jenkins/jenkins:lts
 
 docker run -d \
@@ -65,21 +68,28 @@ docker run -d \
   -v /var/run/docker.sock:/var/run/docker.sock \
   jenkins/jenkins:lts
 
-sleep 120
+sleep 60
 
 docker exec -u root jenkins bash -c '
 apt-get update &&
-apt-get install -y wget unzip docker.io &&
+apt-get install -y git wget unzip docker.io &&
+
 wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
+
 unzip terraform_1.6.6_linux_amd64.zip &&
+
 mv terraform /usr/local/bin/ &&
-chmod +x /usr/local/bin/terraform
+
+chmod +x /usr/local/bin/terraform &&
+
+chmod 666 /var/run/docker.sock
 '
 
 EOF
 }
 
 resource "aws_instance" "app" {
+
   ami                    = var.ami_id
   instance_type          = var.instance_type
   key_name               = var.key_name
@@ -99,6 +109,8 @@ systemctl start docker
 systemctl enable docker
 
 usermod -aG docker ec2-user
+
+chmod 666 /var/run/docker.sock
 
 EOF
 }

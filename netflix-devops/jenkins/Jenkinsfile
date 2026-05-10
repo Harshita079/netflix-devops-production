@@ -3,6 +3,38 @@ pipeline {
 
     stages {
 
+        stage('Terraform Format') {
+            steps {
+                dir('netflix-devops/terraform') {
+                    sh 'terraform fmt'
+                }
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                dir('netflix-devops/terraform') {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Validate') {
+            steps {
+                dir('netflix-devops/terraform') {
+                    sh 'terraform validate'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                dir('netflix-devops/terraform') {
+                    sh 'terraform plan'
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 dir('netflix-devops') {
@@ -15,6 +47,9 @@ pipeline {
             steps {
 
                 dir('netflix-devops/terraform') {
+
+                    sh 'terraform init'
+
                     script {
                         env.APP_IP = sh(
                             script: "terraform output -raw app_ip",
@@ -24,6 +59,7 @@ pipeline {
                 }
 
                 dir('netflix-devops') {
+
                     sh '''
                     docker save -o netflix-app.tar netflix-app
 
@@ -37,11 +73,8 @@ pipeline {
 
                     docker stop netflix || true
                     docker rm netflix || true
-
                     docker load -i /home/ec2-user/netflix-app.tar
-
-                    docker run -d -p 80:80 \
-                    --name netflix netflix-app
+                    docker run -d -p 80:80 --name netflix netflix-app
                     "
                     '''
                 }
