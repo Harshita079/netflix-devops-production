@@ -38,7 +38,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 dir('netflix-devops') {
-                    sh 'docker build -t netflix-app .'
+                    sh 'docker build -t netflix-app -f docker/Dockerfile .'
                 }
             }
         }
