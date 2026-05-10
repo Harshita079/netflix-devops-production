@@ -34,5 +34,13 @@ pipeline {
                 }
             }
         }
+
+        stage('Terraform Apply') {
+            steps {
+                dir('netflix-devops/terraform') {
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
     }
 }

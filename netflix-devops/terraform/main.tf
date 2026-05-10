@@ -1,11 +1,18 @@
+# main.tf
+
 provider "aws" {
   region = var.aws_region
 }
+
+# =========================
+# SECURITY GROUP
+# =========================
 
 resource "aws_security_group" "netflix_sg" {
   name = "netflix-sg"
 
   ingress {
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -13,6 +20,7 @@ resource "aws_security_group" "netflix_sg" {
   }
 
   ingress {
+    description = "Jenkins"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
@@ -20,6 +28,7 @@ resource "aws_security_group" "netflix_sg" {
   }
 
   ingress {
+    description = "HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -34,10 +43,18 @@ resource "aws_security_group" "netflix_sg" {
   }
 }
 
+# =========================
+# CLOUDWATCH
+# =========================
+
 resource "aws_cloudwatch_log_group" "netflix_logs" {
   name              = "/netflix/devops/logs"
   retention_in_days = 7
 }
+
+# =========================
+# NETFLIX SERVER
+# =========================
 
 resource "aws_instance" "netflix_server" {
   ami           = var.ami_id
@@ -53,6 +70,10 @@ resource "aws_instance" "netflix_server" {
   }
 }
 
+# =========================
+# JENKINS SERVER
+# =========================
+
 resource "aws_instance" "jenkins_server" {
   ami           = var.ami_id
   instance_type = var.instance_type
@@ -65,29 +86,25 @@ resource "aws_instance" "jenkins_server" {
   user_data = <<-EOF
 #!/bin/bash
 
-apt update -y
+yum update -y
 
-apt install -y openjdk-17-jdk
-apt install -y docker.io
-apt install -y unzip
-apt install -y wget
-apt install -y git
+yum install -y java-17-amazon-corretto
+
+yum install -y docker git wget unzip
 
 systemctl start docker
 systemctl enable docker
 
-usermod -aG docker ubuntu
+usermod -aG docker ec2-user
 
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | tee \
-/usr/share/keyrings/jenkins-keyring.asc > /dev/null
+wget -O /etc/yum.repos.d/jenkins.repo \
+https://pkg.jenkins.io/redhat-stable/jenkins.repo
 
-echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
-https://pkg.jenkins.io/debian-stable binary/ | tee \
-/etc/apt/sources.list.d/jenkins.list > /dev/null
+rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
 
-apt update -y
+yum upgrade -y
 
-apt install -y jenkins
+yum install -y jenkins
 
 systemctl enable jenkins
 systemctl start jenkins
