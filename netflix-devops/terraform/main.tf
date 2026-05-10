@@ -1,18 +1,11 @@
-# main.tf
-
 provider "aws" {
   region = var.aws_region
 }
-
-# =========================
-# SECURITY GROUP
-# =========================
 
 resource "aws_security_group" "netflix_sg" {
   name = "netflix-sg"
 
   ingress {
-    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -20,7 +13,6 @@ resource "aws_security_group" "netflix_sg" {
   }
 
   ingress {
-    description = "Jenkins"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
@@ -28,7 +20,6 @@ resource "aws_security_group" "netflix_sg" {
   }
 
   ingress {
-    description = "HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -43,81 +34,71 @@ resource "aws_security_group" "netflix_sg" {
   }
 }
 
-# =========================
-# CLOUDWATCH
-# =========================
-
-resource "aws_cloudwatch_log_group" "netflix_logs" {
-  name              = "/netflix/devops/logs"
-  retention_in_days = 7
-}
-
-# =========================
-# NETFLIX SERVER
-# =========================
-
-resource "aws_instance" "netflix_server" {
-  ami           = var.ami_id
-  instance_type = var.instance_type
-  key_name      = var.key_name
-
-  vpc_security_group_ids = [
-    aws_security_group.netflix_sg.id
-  ]
+resource "aws_instance" "jenkins" {
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  key_name               = var.key_name
+  vpc_security_group_ids = [aws_security_group.netflix_sg.id]
 
   tags = {
-    Name = "Netflix-App-Server"
+    Name = "Jenkins-Server"
   }
-}
-
-# =========================
-# JENKINS SERVER
-# =========================
-
-resource "aws_instance" "jenkins_server" {
-  ami           = var.ami_id
-  instance_type = var.instance_type
-  key_name      = var.key_name
-
-  vpc_security_group_ids = [
-    aws_security_group.netflix_sg.id
-  ]
 
   user_data = <<-EOF
 #!/bin/bash
 
 yum update -y
-
-yum install -y java-17-amazon-corretto
-
-yum install -y docker git wget unzip
+yum install -y docker git unzip wget
 
 systemctl start docker
 systemctl enable docker
 
 usermod -aG docker ec2-user
 
-wget -O /etc/yum.repos.d/jenkins.repo \
-https://pkg.jenkins.io/redhat-stable/jenkins.repo
+docker pull jenkins/jenkins:lts
 
-rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+docker run -d \
+  --name jenkins \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins/jenkins:lts
 
-yum upgrade -y
+sleep 120
 
-yum install -y jenkins
-
-systemctl enable jenkins
-systemctl start jenkins
-
-wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
-
-unzip terraform_1.6.6_linux_amd64.zip
-
-mv terraform /usr/local/bin/
+docker exec -u root jenkins bash -c '
+apt-get update &&
+apt-get install -y wget unzip docker.io &&
+wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
+unzip terraform_1.6.6_linux_amd64.zip &&
+mv terraform /usr/local/bin/ &&
+chmod +x /usr/local/bin/terraform
+'
 
 EOF
+}
+
+resource "aws_instance" "app" {
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  key_name               = var.key_name
+  vpc_security_group_ids = [aws_security_group.netflix_sg.id]
 
   tags = {
-    Name = "Jenkins-Server"
+    Name = "Netflix-App"
   }
+
+  user_data = <<-EOF
+#!/bin/bash
+
+yum update -y
+yum install -y docker git
+
+systemctl start docker
+systemctl enable docker
+
+usermod -aG docker ec2-user
+
+EOF
 }
